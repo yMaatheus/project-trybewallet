@@ -1,8 +1,14 @@
 import React from 'react';
 import { connect } from 'react-redux';
 import PropTypes from 'prop-types';
+import { saveCurrencies } from '../actions';
 
 class Wallet extends React.Component {
+  componentDidMount() {
+    const { loadCurrencies } = this.props;
+    loadCurrencies();
+  }
+
   render() {
     const { email } = this.props;
     return (
@@ -19,10 +25,15 @@ class Wallet extends React.Component {
 
 Wallet.propTypes = {
   email: PropTypes.string,
+  loadCurrencies: PropTypes.func,
 }.isRequired;
 
 const mapStateToProps = (generalState) => ({
   email: generalState.user.email,
 });
 
-export default connect(mapStateToProps)(Wallet);
+const mapDispatchToProps = (dispatch) => ({
+  loadCurrencies: () => dispatch(saveCurrencies()),
+});
+
+export default connect(mapStateToProps, mapDispatchToProps)(Wallet);
