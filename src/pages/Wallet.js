@@ -46,14 +46,16 @@ class Wallet extends React.Component {
 
   render() {
     const { email, currencies, expensesTotal } = this.props;
+    console.log(expensesTotal);
     const { value, description, currency, method, tag } = this.state;
+    const total = Number(!expensesTotal ? 0 : expensesTotal).toFixed(2);
     return (
       <>
         <header>
           <div>
             <span data-testid="email-field">{`Email: ${email}`}</span>
           </div>
-          <span data-testid="total-field">{expensesTotal.toFixed(2)}</span>
+          <span data-testid="total-field">{total}</span>
           <span data-testid="header-currency-field">BRL</span>
         </header>
         <form>

@@ -21,6 +21,5 @@ export const saveExpense = (expense) => async (dispatch) => {
   expense.exchangeRates = currencies;
   dispatch(addExpense(expense));
   const BRL = expense.value * expense.exchangeRates[expense.currency].ask;
-  console.log(BRL);
   dispatch(incrementExpenseTotal(BRL));
 };
