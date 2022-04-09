@@ -46,9 +46,9 @@ class Wallet extends React.Component {
 
   render() {
     const { email, currencies, expensesTotal } = this.props;
-    console.log(expensesTotal);
     const { value, description, currency, method, tag } = this.state;
     const total = Number(!expensesTotal ? 0 : expensesTotal).toFixed(2);
+    const paymentMethod = 'Método de pagamento';
     return (
       <>
         <header>
@@ -95,7 +95,7 @@ class Wallet extends React.Component {
             </select>
           </label>
           <label htmlFor="method-input">
-            Método de pagamento
+            {paymentMethod}
             <select
               name="method"
               value={ method }
@@ -103,7 +103,7 @@ class Wallet extends React.Component {
               id="method-input"
               data-testid="method-input"
             >
-              <option hidden>Método de pagamento</option>
+              <option hidden>{paymentMethod}</option>
               <option value="Dinheiro">Dinheiro</option>
               <option value="Cartão de crédito">Cartão de crédito</option>
               <option value="Cartão de débito">Cartão de débito</option>
@@ -134,6 +134,26 @@ class Wallet extends React.Component {
 
           </button>
         </form>
+        <table>
+          <thead>
+            <tr>
+              <th>Descrição</th>
+              <th>Tag</th>
+              <th>{paymentMethod}</th>
+              <th>Valor</th>
+              <th>Moeda</th>
+              <th>Câmbio utilizado</th>
+              <th>Valor convertido</th>
+              <th>Moeda de conversão</th>
+              <th>Editar/Excluir</th>
+            </tr>
+          </thead>
+          <tbody>
+            {/* <tr>
+            <td>a</td>
+          </tr> */}
+          </tbody>
+        </table>
       </>
     );
   }
