@@ -2,12 +2,14 @@ import React from 'react';
 import { connect } from 'react-redux';
 import PropTypes from 'prop-types';
 import { saveCurrencies, saveExpense } from '../actions';
+import styles from './Wallet.module.css';
 
 class Wallet extends React.Component {
   constructor() {
     super();
     this.onHandleChange = this.onHandleChange.bind(this);
     this.onClickAddExpenses = this.onClickAddExpenses.bind(this);
+    this.convertCurrency = this.convertCurrency.bind(this);
     this.state = {
       value: 0,
       description: '',
@@ -44,8 +46,30 @@ class Wallet extends React.Component {
     });
   }
 
+  getExpenseValue(expense) {
+    return Number(expense.value).toFixed(2);
+  }
+
+  getExpenseAskValue(expense) {
+    return Number(expense.exchangeRates[expense.currency].ask).toFixed(2);
+  }
+
+  getExpenseValueConverted(expense) {
+    return (expense.exchangeRates[expense.currency].ask * expense.value).toFixed(2);
+  }
+
+  convertCurrency(currency) {
+    if (currency === 'USD') {
+      return 'Dólar Comercial';
+    }
+    if (currency === 'EUR') {
+      return 'Euro';
+    }
+    return currency;
+  }
+
   render() {
-    const { email, currencies, expensesTotal } = this.props;
+    const { email, currencies, expensesTotal, expenses } = this.props;
     const { value, description, currency, method, tag } = this.state;
     const total = Number(!expensesTotal ? 0 : expensesTotal).toFixed(2);
     const paymentMethod = 'Método de pagamento';
@@ -134,24 +158,34 @@ class Wallet extends React.Component {
 
           </button>
         </form>
-        <table>
+        <table className={ styles.border }>
           <thead>
             <tr>
-              <th>Descrição</th>
-              <th>Tag</th>
-              <th>{paymentMethod}</th>
-              <th>Valor</th>
-              <th>Moeda</th>
-              <th>Câmbio utilizado</th>
-              <th>Valor convertido</th>
-              <th>Moeda de conversão</th>
-              <th>Editar/Excluir</th>
+              <th className={ styles.border }>Descrição</th>
+              <th className={ styles.border }>Tag</th>
+              <th className={ styles.border }>{paymentMethod}</th>
+              <th className={ styles.border }>Valor</th>
+              <th className={ styles.border }>Moeda</th>
+              <th className={ styles.border }>Câmbio utilizado</th>
+              <th className={ styles.border }>Valor convertido</th>
+              <th className={ styles.border }>Moeda de conversão</th>
+              <th className={ styles.border }>Editar/Excluir</th>
             </tr>
           </thead>
           <tbody>
-            {/* <tr>
-            <td>a</td>
-          </tr> */}
+            {expenses.map((expense) => (
+              <tr key={ expense.id }>
+                <td>{expense.description}</td>
+                <td>{expense.tag}</td>
+                <td>{expense.method}</td>
+                <td>{this.getExpenseValue(expense)}</td>
+                <td>{this.convertCurrency(expense.currency)}</td>
+                <td>{this.getExpenseAskValue(expense)}</td>
+                <td>{this.getExpenseValueConverted(expense)}</td>
+                <td>Real</td>
+                <td>Editar/Excluir</td>
+              </tr>
+            ))}
           </tbody>
         </table>
       </>
