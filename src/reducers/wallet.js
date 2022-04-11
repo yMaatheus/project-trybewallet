@@ -1,7 +1,6 @@
-import { SET_CURRENCIES, ADD_EXPENSE, INCREMENT_TOTAL_EXPENSES } from '../actions';
+import { SET_CURRENCIES, ADD_EXPENSE, DELETE_EXPENSE, EDIT_EXPENSE } from '../actions';
 
 const INITIAL_STATE = {
-  expensesTotal: 0,
   currencies: [],
   expenses: [],
 };
@@ -12,10 +11,25 @@ function wallet(state = INITIAL_STATE, action) {
     return { ...state, currencies: action.currencies };
   case ADD_EXPENSE:
     return { ...state, expenses: [...state.expenses, action.expense] };
-  case INCREMENT_TOTAL_EXPENSES:
+  case DELETE_EXPENSE:
     return {
       ...state,
-      expensesTotal: (Number(state.expensesTotal) + Number(action.value)),
+      expenses: state.expenses.filter(({ id }) => id !== action.id),
+    };
+  case EDIT_EXPENSE:
+    return {
+      ...state,
+      expenses: state.expenses.map((expense) => {
+        const { id, value, description, currency, method, tag } = action.expense;
+        if (expense.id === id) {
+          expense.value = value;
+          expense.description = description;
+          expense.currency = currency;
+          expense.method = method;
+          expense.tag = tag;
+        }
+        return expense;
+      }),
     };
   default:
     return state;

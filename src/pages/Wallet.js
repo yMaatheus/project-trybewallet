@@ -1,16 +1,23 @@
 import React from 'react';
-import { connect } from 'react-redux';
 import PropTypes from 'prop-types';
-import { saveCurrencies, saveExpense } from '../actions';
+import { connect } from 'react-redux';
 import styles from './Wallet.module.css';
+import Header from '../components/Header';
+import { saveCurrencies, saveExpense, removeExpense, editExpense } from '../actions';
+import { currencyToString, formatExpenseValue, formatExpenseAsk,
+  expenseValueInBRL, stringToCurrency } from '../services';
 
 class Wallet extends React.Component {
   constructor() {
     super();
     this.onHandleChange = this.onHandleChange.bind(this);
     this.onClickAddExpenses = this.onClickAddExpenses.bind(this);
-    this.convertCurrency = this.convertCurrency.bind(this);
+    this.onClickSubmitExpenseEdit = this.onClickSubmitExpenseEdit.bind(this);
+    this.onClickExpenseEditButton = this.onClickExpenseEditButton.bind(this);
+    this.resetState = this.resetState.bind(this);
     this.state = {
+      isEdit: false,
+      expenseEditId: 0,
       value: 0,
       description: '',
       currency: '',
@@ -32,12 +39,37 @@ class Wallet extends React.Component {
 
   onClickAddExpenses() {
     const { expenses, addExpense } = this.props;
-    const expense = {
-      id: (expenses.length),
-      ...this.state,
-    };
+    const { value, description, currency, method, tag } = this.state;
+    const expense = { id: (expenses.length), value, description, currency, method, tag };
     addExpense(expense);
+    this.resetState();
+  }
+
+  onClickSubmitExpenseEdit() {
+    const { expenseEditId: id, value, description,
+      currency: currencyString, method, tag } = this.state;
+    const { updateExpense } = this.props;
+    const currency = stringToCurrency(currencyString);
+    updateExpense({ id, value, description, currency, method, tag });
+    this.resetState();
+  }
+
+  onClickExpenseEditButton(expense) {
     this.setState({
+      isEdit: true,
+      expenseEditId: expense.id,
+      value: formatExpenseValue(expense),
+      description: expense.description,
+      currency: currencyToString(expense),
+      method: expense.method,
+      tag: expense.tag,
+    });
+  }
+
+  resetState() {
+    this.setState({
+      isEdit: false,
+      expenseEditId: 0,
       value: 0,
       description: '',
       currency: '',
@@ -46,42 +78,13 @@ class Wallet extends React.Component {
     });
   }
 
-  getExpenseValue(expense) {
-    return Number(expense.value).toFixed(2);
-  }
-
-  getExpenseAskValue(expense) {
-    return Number(expense.exchangeRates[expense.currency].ask).toFixed(2);
-  }
-
-  getExpenseValueConverted(expense) {
-    return (expense.exchangeRates[expense.currency].ask * expense.value).toFixed(2);
-  }
-
-  convertCurrency(currency) {
-    if (currency === 'USD') {
-      return 'Dólar Comercial';
-    }
-    if (currency === 'EUR') {
-      return 'Euro';
-    }
-    return currency;
-  }
-
   render() {
-    const { email, currencies, expensesTotal, expenses } = this.props;
-    const { value, description, currency, method, tag } = this.state;
-    const total = Number(!expensesTotal ? 0 : expensesTotal).toFixed(2);
+    const { currencies, expenses, deleteExpense } = this.props;
+    const { value, description, currency, method, tag, isEdit } = this.state;
     const paymentMethod = 'Método de pagamento';
     return (
       <>
-        <header>
-          <div>
-            <span data-testid="email-field">{`Email: ${email}`}</span>
-          </div>
-          <span data-testid="total-field">{total}</span>
-          <span data-testid="header-currency-field">BRL</span>
-        </header>
+        <Header />
         <form>
           <label htmlFor="value-input">
             <input
@@ -152,10 +155,9 @@ class Wallet extends React.Component {
           </label>
           <button
             type="button"
-            onClick={ this.onClickAddExpenses }
+            onClick={ isEdit ? this.onClickSubmitExpenseEdit : this.onClickAddExpenses }
           >
-            Adicionar despesa
-
+            {isEdit ? 'Editar despesa' : 'Adicionar despesa'}
           </button>
         </form>
         <table className={ styles.border }>
@@ -178,12 +180,28 @@ class Wallet extends React.Component {
                 <td>{expense.description}</td>
                 <td>{expense.tag}</td>
                 <td>{expense.method}</td>
-                <td>{this.getExpenseValue(expense)}</td>
-                <td>{this.convertCurrency(expense.currency)}</td>
-                <td>{this.getExpenseAskValue(expense)}</td>
-                <td>{this.getExpenseValueConverted(expense)}</td>
+                <td>{formatExpenseValue(expense)}</td>
+                <td>{currencyToString(expense)}</td>
+                <td>{formatExpenseAsk(expense)}</td>
+                <td>{expenseValueInBRL(expense)}</td>
                 <td>Real</td>
-                <td>Editar/Excluir</td>
+                <td>
+                  <button
+                    type="button"
+                    data-testid="edit-btn"
+                    onClick={ () => this.onClickExpenseEditButton(expense) }
+                  >
+                    Editar
+                  </button>
+                  <span>/</span>
+                  <button
+                    type="button"
+                    data-testid="delete-btn"
+                    onClick={ () => deleteExpense(expense) }
+                  >
+                    Excluir
+                  </button>
+                </td>
               </tr>
             ))}
           </tbody>
@@ -194,23 +212,23 @@ class Wallet extends React.Component {
 }
 
 Wallet.propTypes = {
-  email: PropTypes.string,
   currencies: PropTypes.array,
-  expensesTotal: PropTypes.number,
   expenses: PropTypes.array,
   loadCurrencies: PropTypes.func,
+  deleteExpense: PropTypes.func,
+  updateExpense: PropTypes.func,
 }.isRequired;
 
 const mapStateToProps = (generalState) => ({
-  email: generalState.user.email,
   currencies: generalState.wallet.currencies,
-  expensesTotal: generalState.wallet.expensesTotal,
   expenses: generalState.wallet.expenses,
 });
 
 const mapDispatchToProps = (dispatch) => ({
   loadCurrencies: () => dispatch(saveCurrencies()),
   addExpense: (expense) => dispatch(saveExpense(expense)),
+  deleteExpense: ({ id }) => dispatch(removeExpense(id)),
+  updateExpense: (expense) => dispatch(editExpense(expense)),
 });
 
 export default connect(mapStateToProps, mapDispatchToProps)(Wallet);
